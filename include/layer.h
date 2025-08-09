@@ -21,5 +21,5 @@ void layer_clear(Layer * layer);
 void layer_delete(Layer * layer);
 
 void export_image(eList * layers, int outputSizeX, int outputSizeY, const char * filename);
-
+Rectangle get_grid_rectangle(int rows, int cols, int tilesize, Vector2 mousePos);
 #endif

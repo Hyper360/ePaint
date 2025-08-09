@@ -69,7 +69,12 @@ void grid_fill_color(Grid * grid, int row, int col, Color color, Color replacedC
 
 
 
-void grid_draw(Grid * grid){
+void grid_create_texture(Grid * grid, RenderTexture2D * texture){
+    int width = grid->rows*grid->tilesize;
+    int height = grid->cols*grid->tilesize;
+    *texture = LoadRenderTexture(width, height);
+
+    BeginTextureMode(*texture);
     for (int row = 0; row <= grid->rows; ++row){
         int lineStartY = grid->tilesize*row;
         int lineEndX = grid->tilesize*grid->cols;
@@ -80,7 +85,7 @@ void grid_draw(Grid * grid){
         int lineEndY = grid->tilesize*grid->rows;
         DrawLineEx((Vector2){lineStartX, 0}, (Vector2){lineStartX, lineEndY}, 2, BLACK);
     }
-
+    EndTextureMode();
 }
 
 void grid_clear(Grid * grid){

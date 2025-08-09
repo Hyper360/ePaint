@@ -42,8 +42,6 @@ void layer_draw(Layer * layer){
     float width = layer->canvas.texture.width;
     float height = layer->canvas.texture.height;
     DrawTextureRec(layer->canvas.texture, (Rectangle){0, 0, width, -height}, (Vector2){0, 0}, WHITE);
-
-    grid_draw(&layer->grid);
 }
 
 void layer_clear(Layer * layer){
@@ -86,4 +84,11 @@ void export_image(eList * layers, int outputSizeX, int outputSizeY, const char *
     }
     UnloadRenderTexture(texture);
     UnloadImage(image);
+}
+
+Rectangle get_grid_rectangle(int rows, int cols, int tilesize, Vector2 mousePos){
+    int col = (mousePos.x/tilesize);
+    int row = (mousePos.y/tilesize);
+
+    return (Rectangle){col*tilesize, row*tilesize, tilesize, tilesize};
 }

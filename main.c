@@ -28,7 +28,7 @@ int main(int argc, char ** argv){
     const int TILESIZE = 32;
 
     InitWindow(WIDTH, HEIGHT, "ePAINT");
-    SetTargetFPS(120);
+    SetTargetFPS(240);
     SetTraceLogLevel(LOG_NONE);
     
     eList layers;
@@ -54,6 +54,10 @@ int main(int argc, char ** argv){
     camera.zoom = 1.0f;
     
     Texture2D background = LoadTexture("checkered.png");
+    RenderTexture2D gridTexture;
+    grid_create_texture(&curLayer->grid, &gridTexture);
+
+    unsigned int ticks = 0;
     
     while (!WindowShouldClose()){
         
@@ -63,7 +67,7 @@ int main(int argc, char ** argv){
             
             if (!colorPickerMode){
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)){
-                    if (IsKeyDown(KEY_F)) layer_fill_color(curLayer, mouseGridPos,currentColor);
+                    if (IsKeyDown(KEY_F)) layer_fill_color(curLayer, mouseGridPos, currentColor);
                     else layer_add_point(curLayer, mouseGridPos, currentColor);
                 }
                 if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
@@ -108,41 +112,47 @@ int main(int argc, char ** argv){
             camera.offset = Vector2Add(camera.offset, GetMouseDelta());
         }
         
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        DrawTexture(background, 0, 0, WHITE);
-        
-        BeginMode2D(camera);
-        layer_draw(curLayer);
-        EndMode2D();
-        
-        if (palette.showColors){palette_show_colors(&palette);}
-        DrawText(TextFormat("ZOOM: %.2f", camera.zoom), 0, 0, 24, RED);
+        if (ticks % 4 == 0){
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
+            DrawTexture(background, 0, 0, WHITE);
+            
+            BeginMode2D(camera);
+                layer_draw(curLayer);
+                DrawRectangleRec(get_grid_rectangle(inputRows, inputCols, TILESIZE, relMousePos), ColorAlpha(WHITE, 0.3));
+                DrawRectangleLinesEx((Rectangle){0, 0, inputCols*TILESIZE, inputRows*TILESIZE}, 10, BLACK);
+            EndMode2D();
+            
+            if (palette.showColors){palette_show_colors(&palette);}
+            DrawText(TextFormat("ZOOM: %.2f", camera.zoom), 0, 0, 24, RED);
 
-        if (colorPickerMode){
-            GuiColorPicker((Rectangle){WIDTH-230, 0, 200, 200}, NULL, &currentColor);
+            if (colorPickerMode){
+                GuiColorPicker((Rectangle){WIDTH-230, 0, 200, 200}, NULL, &currentColor);
 
-            GuiColorBarAlpha((Rectangle){WIDTH-230, 210, 200, 30}, NULL, &alphaFloat);
-            currentColor.a = 255*alphaFloat;
+                GuiColorBarAlpha((Rectangle){WIDTH-230, 210, 200, 30}, NULL, &alphaFloat);
+                currentColor.a = 255*alphaFloat;
 
-            int redVal = currentColor.r;
-            int greenVal = currentColor.g;
-            int blueVal = currentColor.b;
-            int alphaVal = currentColor.a;
-            DrawRectangle(WIDTH-230, 260, 80, 160, RAYWHITE); // For some reason, the ValueBoxes dont have default backgrounds??
-            GuiValueBox((Rectangle){WIDTH-230, 260, 80, 40}, "RED", &redVal, 0, 255, IsKeyDown(KEY_R));
-            GuiValueBox((Rectangle){WIDTH-230, 300, 80, 40}, "GREEN", &greenVal, 0, 255, IsKeyDown(KEY_G));
-            GuiValueBox((Rectangle){WIDTH-230, 340, 80, 40}, "BLUE", &blueVal, 0, 255, IsKeyDown(KEY_B));
-            GuiValueBox((Rectangle){WIDTH-230, 380, 80, 40}, "ALPHA", &alphaVal, 0, 255, IsKeyDown(KEY_A));
+                int redVal = currentColor.r;
+                int greenVal = currentColor.g;
+                int blueVal = currentColor.b;
+                int alphaVal = currentColor.a;
+                DrawRectangle(WIDTH-230, 260, 80, 160, RAYWHITE); // For some reason, the ValueBoxes dont have default backgrounds??
+                GuiValueBox((Rectangle){WIDTH-230, 260, 80, 40}, "RED", &redVal, 0, 255, IsKeyDown(KEY_R));
+                GuiValueBox((Rectangle){WIDTH-230, 300, 80, 40}, "GREEN", &greenVal, 0, 255, IsKeyDown(KEY_G));
+                GuiValueBox((Rectangle){WIDTH-230, 340, 80, 40}, "BLUE", &blueVal, 0, 255, IsKeyDown(KEY_B));
+                GuiValueBox((Rectangle){WIDTH-230, 380, 80, 40}, "ALPHA", &alphaVal, 0, 255, IsKeyDown(KEY_A));
 
-            currentColor = (Color){redVal, greenVal, blueVal, alphaVal};
-            DrawRectangle(WIDTH-115, 260, 80, 160, currentColor);
+                currentColor = (Color){redVal, greenVal, blueVal, alphaVal};
+                DrawRectangle(WIDTH-115, 260, 80, 160, currentColor);
+            }
+            
+            EndDrawing();
         }
-        
-        EndDrawing();
+        ticks++;
     }
     
     UnloadTexture(background);
+    UnloadRenderTexture(gridTexture);
     layer_delete(curLayer);
     CloseWindow();
     return 0;
