@@ -18,15 +18,16 @@ void layer_add_point(Layer * layer, Vector2 point, Color color){
     grid_add_point(&layer->grid, row, col, color);
 
     BeginTextureMode(layer->canvas);
-    if (ColorIsEqual(BLANK, color)){
+    if (color.a != 255){
         BeginScissorMode(col*layer->grid.tilesize, row*layer->grid.tilesize, layer->grid.tilesize, layer->grid.tilesize);
-        ClearBackground(BLANK);
+        ClearBackground(color);
         EndScissorMode();
     }
     else{
         DrawRectangle(col*layer->grid.tilesize, row*layer->grid.tilesize, layer->grid.tilesize, layer->grid.tilesize, color);
     }
     EndTextureMode();
+    
 }
 
 void layer_fill_color(Layer * layer, Vector2 point, Color color){

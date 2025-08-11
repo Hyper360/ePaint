@@ -30,9 +30,9 @@ void grid_fill_color(Grid * grid, int row, int col, Color color, Color replacedC
     if (ColorIsEqual(color, replacedColor)){return;}
     grid->grid[row][col] = color;
 
-    if (ColorIsEqual(BLANK, color)){
+    if (color.a != 255){
         BeginScissorMode(col*grid->tilesize, row*grid->tilesize, grid->tilesize, grid->tilesize);
-        ClearBackground(BLANK);
+        ClearBackground(color);
         EndScissorMode();
     }
     else{

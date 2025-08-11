@@ -1,7 +1,7 @@
-// #include "raylib.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "raylib.h"
 #define E_LIST_IMPLEMENTATION
 #include "layer.h"
 #include "palette.h"
@@ -9,7 +9,7 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
-#include <float.h>
+#include <stdlib.h>
 
 int main(int argc, char ** argv){
     if (argc != 6){
@@ -39,6 +39,7 @@ int main(int argc, char ** argv){
     elist_add(&layers, &firstLayer);
     
     Layer * curLayer = (Layer*)elist_get(&layers, 0);
+    int curLayerID = 0;
     
     Palette palette;
     palette_load(&palette);
@@ -54,8 +55,6 @@ int main(int argc, char ** argv){
     camera.zoom = 1.0f;
     
     Texture2D background = LoadTexture("checkered.png");
-    RenderTexture2D gridTexture;
-    grid_create_texture(&curLayer->grid, &gridTexture);
 
     unsigned int ticks = 0;
     
@@ -106,54 +105,77 @@ int main(int argc, char ** argv){
             palette.currentColorID = 23 + palette.currentColorID;
             currentColor = palette_get_color(&palette);
         }
+        if (IsKeyPressed(KEY_L)){
+            Layer newLayer;
+            layer_create(&newLayer, inputRows, inputCols, TILESIZE);
+            elist_add(&layers, &newLayer);
+            
+            curLayerID++;
+            curLayer = (Layer*)elist_get(&layers, curLayerID);
+        }
+        if (IsKeyPressed(KEY_UP) || IsMouseButtonPressed(MOUSE_BUTTON_FORWARD)){
+            if (curLayerID+1 >= layers.size) curLayerID = 0;
+            else curLayerID++;
+            curLayer = (Layer*)elist_get(&layers, curLayerID);
+        }
+        if (IsKeyPressed(KEY_DOWN) || IsMouseButtonPressed(MOUSE_BUTTON_BACK)){
+            if (curLayerID == 0) curLayerID = layers.size-1; // size_t cannot be less than zero
+            else curLayerID--;
+            curLayer = (Layer*)elist_get(&layers, curLayerID);
+        }
         
         camera.zoom = expf(logf(camera.zoom) + ((float)GetMouseWheelMove()*0.1f)); // Derived from camera example on raylib site
         if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
             camera.offset = Vector2Add(camera.offset, GetMouseDelta());
         }
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        DrawTexture(background, 0, 0, WHITE);
         
-        if (ticks % 4 == 0){
-            BeginDrawing();
-            ClearBackground(RAYWHITE);
-            DrawTexture(background, 0, 0, WHITE);
-            
-            BeginMode2D(camera);
-                layer_draw(curLayer);
-                DrawRectangleRec(get_grid_rectangle(inputRows, inputCols, TILESIZE, relMousePos), ColorAlpha(WHITE, 0.3));
-                DrawRectangleLinesEx((Rectangle){0, 0, inputCols*TILESIZE, inputRows*TILESIZE}, 10, BLACK);
-            EndMode2D();
-            
-            if (palette.showColors){palette_show_colors(&palette);}
-            DrawText(TextFormat("ZOOM: %.2f", camera.zoom), 0, 0, 24, RED);
-
-            if (colorPickerMode){
-                GuiColorPicker((Rectangle){WIDTH-230, 0, 200, 200}, NULL, &currentColor);
-
-                GuiColorBarAlpha((Rectangle){WIDTH-230, 210, 200, 30}, NULL, &alphaFloat);
-                currentColor.a = 255*alphaFloat;
-
-                int redVal = currentColor.r;
-                int greenVal = currentColor.g;
-                int blueVal = currentColor.b;
-                int alphaVal = currentColor.a;
-                DrawRectangle(WIDTH-230, 260, 80, 160, RAYWHITE); // For some reason, the ValueBoxes dont have default backgrounds??
-                GuiValueBox((Rectangle){WIDTH-230, 260, 80, 40}, "RED", &redVal, 0, 255, IsKeyDown(KEY_R));
-                GuiValueBox((Rectangle){WIDTH-230, 300, 80, 40}, "GREEN", &greenVal, 0, 255, IsKeyDown(KEY_G));
-                GuiValueBox((Rectangle){WIDTH-230, 340, 80, 40}, "BLUE", &blueVal, 0, 255, IsKeyDown(KEY_B));
-                GuiValueBox((Rectangle){WIDTH-230, 380, 80, 40}, "ALPHA", &alphaVal, 0, 255, IsKeyDown(KEY_A));
-
-                currentColor = (Color){redVal, greenVal, blueVal, alphaVal};
-                DrawRectangle(WIDTH-115, 260, 80, 160, currentColor);
+        BeginMode2D(camera);
+            // size_t size = layers.size;
+            for (int i = layers.size-1; i >= curLayerID; --i){
+                // You want to draw the layers in reverse order
+                layer_draw((Layer*)elist_get(&layers, i));
             }
-            
-            EndDrawing();
+            DrawRectangleRec(get_grid_rectangle(inputRows, inputCols, TILESIZE, relMousePos), ColorAlpha(WHITE, 0.3));
+            DrawRectangleLinesEx((Rectangle){0, 0, inputCols*TILESIZE, inputRows*TILESIZE}, 10, BLACK);
+        EndMode2D();
+        
+        if (palette.showColors){palette_show_colors(&palette);}
+        DrawText(TextFormat("Current Layer: %zd/%zd", (curLayerID+1), layers.size), 0, 0, 24, RED);
+
+        if (colorPickerMode){
+            GuiColorPicker((Rectangle){WIDTH-230, 0, 200, 200}, NULL, &currentColor);
+
+            GuiColorBarAlpha((Rectangle){WIDTH-230, 210, 200, 30}, NULL, &alphaFloat);
+            currentColor.a = 255*alphaFloat;
+
+            int redVal = currentColor.r;
+            int greenVal = currentColor.g;
+            int blueVal = currentColor.b;
+            int alphaVal = currentColor.a;
+            DrawRectangle(WIDTH-230, 260, 80, 160, RAYWHITE); // For some reason, the ValueBoxes dont have default backgrounds??
+            GuiValueBox((Rectangle){WIDTH-230, 260, 80, 40}, "RED", &redVal, 0, 255, IsKeyDown(KEY_R));
+            GuiValueBox((Rectangle){WIDTH-230, 300, 80, 40}, "GREEN", &greenVal, 0, 255, IsKeyDown(KEY_G));
+            GuiValueBox((Rectangle){WIDTH-230, 340, 80, 40}, "BLUE", &blueVal, 0, 255, IsKeyDown(KEY_B));
+            GuiValueBox((Rectangle){WIDTH-230, 380, 80, 40}, "ALPHA", &alphaVal, 0, 255, IsKeyDown(KEY_A));
+
+            currentColor = (Color){redVal, greenVal, blueVal, alphaVal};
+            DrawRectangle(WIDTH-115, 260, 80, 160, currentColor);
         }
+        EndDrawing();
         ticks++;
     }
     
     UnloadTexture(background);
-    UnloadRenderTexture(gridTexture);
-    layer_delete(curLayer);
+    curLayer = NULL;
+    size_t size = layers.size;
+    for (size_t i = 0; i < size; ++i){
+        layer_delete((Layer*)elist_get(&layers, i));
+    }
+    elist_delete(&layers);
     CloseWindow();
     return 0;
 }
