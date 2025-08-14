@@ -44,7 +44,6 @@ int main(int argc, char ** argv){
     Palette palette;
     palette_load(&palette);
     
-    bool colorPickerMode = false;
     Color currentColor = BLACK;
     float alphaFloat = 1.0f;
     
@@ -55,8 +54,10 @@ int main(int argc, char ** argv){
     camera.zoom = 1.0f;
     
     Texture2D background = LoadTexture("checkered.png");
-
+    
     unsigned int ticks = 0;
+    bool colorPickerMode = false;
+    bool layerMode = false;
     
     while (!WindowShouldClose()){
         
@@ -78,7 +79,7 @@ int main(int argc, char ** argv){
         if (IsKeyPressed(KEY_DELETE)){
             layer_clear(curLayer);
         }
-        if (IsKeyPressed(KEY_D)){
+        if (IsKeyPressed(KEY_E)){
             export_image(&layers, outputSizeX, outputSizeY, filename);
         }
         if (IsKeyPressed(KEY_C)){
@@ -114,13 +115,13 @@ int main(int argc, char ** argv){
             curLayer = (Layer*)elist_get(&layers, curLayerID);
         }
         if (IsKeyPressed(KEY_UP) || IsMouseButtonPressed(MOUSE_BUTTON_FORWARD)){
-            if (curLayerID+1 >= layers.size) curLayerID = 0;
-            else curLayerID++;
+            if (curLayerID == 0) curLayerID = layers.size-1; // size_t cannot be less than zero
+            else curLayerID--;
             curLayer = (Layer*)elist_get(&layers, curLayerID);
         }
         if (IsKeyPressed(KEY_DOWN) || IsMouseButtonPressed(MOUSE_BUTTON_BACK)){
-            if (curLayerID == 0) curLayerID = layers.size-1; // size_t cannot be less than zero
-            else curLayerID--;
+            if (curLayerID+1 >= layers.size) curLayerID = 0;
+            else curLayerID++;
             curLayer = (Layer*)elist_get(&layers, curLayerID);
         }
         
@@ -142,9 +143,9 @@ int main(int argc, char ** argv){
             DrawRectangleRec(get_grid_rectangle(inputRows, inputCols, TILESIZE, relMousePos), ColorAlpha(WHITE, 0.3));
             DrawRectangleLinesEx((Rectangle){0, 0, inputCols*TILESIZE, inputRows*TILESIZE}, 10, BLACK);
         EndMode2D();
+
         
         if (palette.showColors){palette_show_colors(&palette);}
-        DrawText(TextFormat("Current Layer: %zd/%zd", (curLayerID+1), layers.size), 0, 0, 24, RED);
 
         if (colorPickerMode){
             GuiColorPicker((Rectangle){WIDTH-230, 0, 200, 200}, NULL, &currentColor);
@@ -165,6 +166,18 @@ int main(int argc, char ** argv){
             currentColor = (Color){redVal, greenVal, blueVal, alphaVal};
             DrawRectangle(WIDTH-115, 260, 80, 160, currentColor);
         }
+
+        if (GuiButton((Rectangle){10, 10, 80, 50}, "#197#")) layerMode = !layerMode;
+        if (layerMode){
+            const int spacing = 5;
+            const Vector2 boxSize = (Vector2){100, 30};
+            for (size_t i = 0; i < layers.size; ++i){
+                int boxYPos = 70+(spacing*i)+(boxSize.y*i);
+                DrawRectangle(10, boxYPos, 100, boxSize.y, (i == curLayerID) ? LIGHTGRAY : GRAY);
+                DrawText(TextFormat("LAYER: %zd", i), 15, boxYPos+2, 5, BLACK);
+            }
+        }
+        
         EndDrawing();
         ticks++;
     }

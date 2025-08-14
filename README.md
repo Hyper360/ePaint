@@ -6,7 +6,7 @@ epaint {rows} {cols} {output image width} {output image height} {output filename
 Controls:  
 Drawing - Left Click  
 Erasing - Right Click  
-Export Image - D Key  
+Export Image - E Key  
 Changing Colors - C Key  
 Adding a Color to the Palette - Q Key  
 Viewing the Palette - S Key  
@@ -14,9 +14,12 @@ Scrolling Through Palette Colors - Left/Right  Arrow Keys
 Camera Zoom - Scroll Wheel  
 Camera Movement - Middle Mouse Button  
 
-Planned:  
+Planned (from high to low priority):  
 ~~Multiple layers~~  
 ~~Handling transparent "paintover"~~  
-Improve UI for Multiple Layers  
-Circle, line, rectangle tool  
+~~Improve UI for Multiple Layers~~  
 Dithering tool  
+Moving Layers  
+Make things accessible through buttons, not keys  
+Save/Import File UI  
+Circle, line, rectangle tool    
