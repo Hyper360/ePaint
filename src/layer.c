@@ -1,4 +1,11 @@
 #include "layer.h"
+#include <math.h>
+
+int between(int x, int low, int high){
+    if (x < low) return low;
+    if (x > high) return high;
+    return x;
+}
 
 void layer_create(Layer * layer, size_t rows, size_t cols, int tilesize){
     grid_create(&layer->grid, rows, cols, tilesize);
@@ -12,8 +19,8 @@ void layer_create(Layer * layer, size_t rows, size_t cols, int tilesize){
 }
 
 void layer_add_point(Layer * layer, Vector2 point, Color color){
-    int row = point.y / layer->grid.tilesize;
-    int col = point.x / layer->grid.tilesize;
+    int row = point.y;
+    int col = point.x;
 
     grid_add_point(&layer->grid, row, col, color);
 
@@ -30,9 +37,23 @@ void layer_add_point(Layer * layer, Vector2 point, Color color){
     
 }
 
+void layer_add_rectangle(Layer * layer, Vector2 start, Vector2 end, Color color){
+    int rowStart = between(fmin(start.y, end.y), 0, layer->grid.rows);
+    int rowEnd = between(fmax(start.y, end.y), 0, layer->grid.rows);
+    int colStart = between(fmin(start.x, end.x), 0, layer->grid.cols);
+    int colEnd = between(fmax(start.x, end.x), 0, layer->grid.cols);
+
+    for (int row = rowStart; row < rowEnd; ++row){
+        for (int col = colStart; col < colEnd; ++col){
+            grid_add_point(&layer->grid, row, col, color);
+            layer_add_point(layer, (Vector2){col, row}, color);
+        }
+    }
+}
+
 void layer_fill_color(Layer * layer, Vector2 point, Color color){
-    int row = point.y / layer->grid.tilesize;
-    int col = point.x / layer->grid.tilesize;
+    int row = point.y;
+    int col = point.x;
 
     BeginTextureMode(layer->canvas);
     grid_fill_color(&layer->grid, row, col, color, grid_get_point(&layer->grid, row, col), true);

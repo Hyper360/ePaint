@@ -15,6 +15,7 @@ typedef struct
 
 void layer_create(Layer * layer, size_t rows, size_t cols, int tilesize);
 void layer_add_point(Layer * layer, Vector2 point, Color color);
+void layer_add_rectangle(Layer * layer, Vector2 start, Vector2 end, Color color);
 void layer_fill_color(Layer * layer, Vector2 point, Color color);
 void layer_draw(Layer * layer);
 void layer_clear(Layer * layer);

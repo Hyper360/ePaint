@@ -10,7 +10,10 @@ Export Image - E Key
 Changing Colors - C Key  
 Adding a Color to the Palette - Q Key  
 Viewing the Palette - S Key  
-Scrolling Through Palette Colors - Left/Right  Arrow Keys  
+Adding Layer - L Key  
+Changing Layer - Up/Down Arrow Keys  
+Rectangle Tool - Holding R Key  
+Scrolling Through Palette Colors - Left/Right Arrow Keys  
 Camera Zoom - Scroll Wheel  
 Camera Movement - Middle Mouse Button  
 
@@ -18,8 +21,9 @@ Planned (from high to low priority):
 ~~Multiple layers~~  
 ~~Handling transparent "paintover"~~  
 ~~Improve UI for Multiple Layers~~  
-Dithering tool  
+~~Rectangle Tool~~  
 Moving Layers  
+Dithering tool  
 Make things accessible through buttons, not keys  
 Save/Import File UI  
-Circle, line, rectangle tool    
+Circle, line, rectangle outline tool    

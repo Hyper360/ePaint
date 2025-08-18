@@ -23,11 +23,11 @@ int main(int argc, char ** argv){
     const char * filename = argv[5];
     printf("Desired Dimensions: %d x %d\n", inputRows, inputCols);
 
-    const int WIDTH = 800;
-    const int HEIGHT = 600;
+    const int WIDTH = 1000;
+    const int HEIGHT = 800;
     const int TILESIZE = 32;
 
-    InitWindow(WIDTH, HEIGHT, "ePAINT");
+    InitWindow(WIDTH, HEIGHT, "ePaint");
     SetTargetFPS(240);
     SetTraceLogLevel(LOG_NONE);
     
@@ -53,26 +53,33 @@ int main(int argc, char ** argv){
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
     
-    Texture2D background = LoadTexture("checkered.png");
+    Image backgroundImg = LoadImage("checkered.png");
+    ImageResizeNN(&backgroundImg, WIDTH, HEIGHT);
+    Texture2D background = LoadTextureFromImage(backgroundImg);
+    UnloadImage(backgroundImg);
     
     unsigned int ticks = 0;
     bool colorPickerMode = false;
     bool layerMode = false;
+    bool rectangleMode = false;
+    Vector2 rectangleStart = Vector2Zero();
     
     while (!WindowShouldClose()){
+        Vector2 mousePos = GetMousePosition();
+        Vector2 relMousePos = GetScreenToWorld2D(mousePos, camera);
+        Vector2 gridMousePos = {(int)(relMousePos.x/TILESIZE), (int)(relMousePos.y/TILESIZE)};
         
-        Vector2 relMousePos = GetScreenToWorld2D(GetMousePosition(), camera);
-        if (CheckCollisionPointRec(relMousePos, (Rectangle){0, 0, curLayer->width, curLayer->height})){
-            Vector2 mouseGridPos = {(relMousePos.x/TILESIZE)*TILESIZE, (relMousePos.y/TILESIZE)*TILESIZE};
+        if (CheckCollisionPointRec(relMousePos, (Rectangle){0, 0, curLayer->width, curLayer->height})
+    && CheckCollisionPointRec(mousePos, (Rectangle){100, 100, WIDTH-100, HEIGHT-100})){
             
-            if (!colorPickerMode){
+            if (!colorPickerMode && !rectangleMode){
                 if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)){
-                    if (IsKeyDown(KEY_F)) layer_fill_color(curLayer, mouseGridPos, currentColor);
-                    else layer_add_point(curLayer, mouseGridPos, currentColor);
+                    if (IsKeyDown(KEY_F)) layer_fill_color(curLayer, gridMousePos, currentColor);
+                    else layer_add_point(curLayer, gridMousePos, currentColor);
                 }
                 if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)){
-                    if (IsKeyDown(KEY_F)) layer_fill_color(curLayer, mouseGridPos, BLANK);
-                    else layer_add_point(curLayer, mouseGridPos, BLANK);
+                    if (IsKeyDown(KEY_F)) layer_fill_color(curLayer, gridMousePos, BLANK);
+                    else layer_add_point(curLayer, gridMousePos, BLANK);
                 }
             }
         }
@@ -87,6 +94,17 @@ int main(int argc, char ** argv){
         }
         if (IsKeyPressed(KEY_Q)){
             palette_add_color(&palette, currentColor);
+        }
+        if (IsKeyDown(KEY_R)){
+            if (rectangleMode == false){
+                rectangleMode = true;
+                rectangleStart = gridMousePos;
+            }
+            rectangleMode = true;
+        }
+        else if (IsKeyUp(KEY_R) && rectangleMode == true){
+            rectangleMode = false;
+            layer_add_rectangle(curLayer, rectangleStart, gridMousePos, currentColor);
         }
         if (IsKeyDown(KEY_S)){
             palette.showColors = true;
@@ -141,18 +159,26 @@ int main(int argc, char ** argv){
                 layer_draw((Layer*)elist_get(&layers, i));
             }
             DrawRectangleRec(get_grid_rectangle(inputRows, inputCols, TILESIZE, relMousePos), ColorAlpha(WHITE, 0.3));
+            if (rectangleMode){
+                float xPos = fmin(rectangleStart.x, gridMousePos.x)*TILESIZE;
+                float yPos = fmin(rectangleStart.y, gridMousePos.y)*TILESIZE;
+                float width = (fmax(rectangleStart.x, gridMousePos.x)*TILESIZE) - xPos;
+                float height = (fmax(rectangleStart.y, gridMousePos.y)*TILESIZE) - yPos;
+                DrawRectangle(xPos, yPos, width, height, currentColor);
+            }
             DrawRectangleLinesEx((Rectangle){0, 0, inputCols*TILESIZE, inputRows*TILESIZE}, 10, BLACK);
         EndMode2D();
 
+        DrawRectangleLinesEx((Rectangle){0, 0, WIDTH, HEIGHT}, 100, DARKGRAY);
         
         if (palette.showColors){palette_show_colors(&palette);}
-
+        
         if (colorPickerMode){
             GuiColorPicker((Rectangle){WIDTH-230, 0, 200, 200}, NULL, &currentColor);
 
             GuiColorBarAlpha((Rectangle){WIDTH-230, 210, 200, 30}, NULL, &alphaFloat);
             currentColor.a = 255*alphaFloat;
-
+            
             int redVal = currentColor.r;
             int greenVal = currentColor.g;
             int blueVal = currentColor.b;
@@ -166,7 +192,7 @@ int main(int argc, char ** argv){
             currentColor = (Color){redVal, greenVal, blueVal, alphaVal};
             DrawRectangle(WIDTH-115, 260, 80, 160, currentColor);
         }
-
+        
         if (GuiButton((Rectangle){10, 10, 80, 50}, "#197#")) layerMode = !layerMode;
         if (layerMode){
             const int spacing = 5;
