@@ -9,9 +9,7 @@ Erasing - Right Click
 Export Image - E Key  
 Changing Colors - C Key  
 Adding a Color to the Palette - Q Key  
-Viewing the Palette - S Key  
-Adding Layer - L Key  
-Changing Layer - Up/Down Arrow Keys  
+Viewing the Palette - S Key   
 Rectangle Tool - Holding R Key  
 Scrolling Through Palette Colors - Left/Right Arrow Keys  
 Camera Zoom - Scroll Wheel  
@@ -22,8 +20,8 @@ Planned (from high to low priority):
 ~~Handling transparent "paintover"~~  
 ~~Improve UI for Multiple Layers~~  
 ~~Rectangle Tool~~  
-Moving Layers  
+~~Moving Layers~~  
+Save/Import File UI  
 Dithering tool  
 Make things accessible through buttons, not keys  
-Save/Import File UI  
 Circle, line, rectangle outline tool    

@@ -3,6 +3,7 @@
 #include <math.h>
 #include "raylib.h"
 #define E_LIST_IMPLEMENTATION
+#include "elist.h"
 #include "layer.h"
 #include "palette.h"
 #include "raymath.h"
@@ -124,25 +125,6 @@ int main(int argc, char ** argv){
             palette.currentColorID = 23 + palette.currentColorID;
             currentColor = palette_get_color(&palette);
         }
-        if (IsKeyPressed(KEY_L)){
-            Layer newLayer;
-            layer_create(&newLayer, inputRows, inputCols, TILESIZE);
-            elist_add(&layers, &newLayer);
-            
-            curLayerID++;
-            curLayer = (Layer*)elist_get(&layers, curLayerID);
-        }
-        if (IsKeyPressed(KEY_UP) || IsMouseButtonPressed(MOUSE_BUTTON_FORWARD)){
-            if (curLayerID == 0) curLayerID = layers.size-1; // size_t cannot be less than zero
-            else curLayerID--;
-            curLayer = (Layer*)elist_get(&layers, curLayerID);
-        }
-        if (IsKeyPressed(KEY_DOWN) || IsMouseButtonPressed(MOUSE_BUTTON_BACK)){
-            if (curLayerID+1 >= layers.size) curLayerID = 0;
-            else curLayerID++;
-            curLayer = (Layer*)elist_get(&layers, curLayerID);
-        }
-        
         camera.zoom = expf(logf(camera.zoom) + ((float)GetMouseWheelMove()*0.1f)); // Derived from camera example on raylib site
         if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)){
             camera.offset = Vector2Add(camera.offset, GetMouseDelta());
@@ -193,14 +175,43 @@ int main(int argc, char ** argv){
             DrawRectangle(WIDTH-115, 260, 80, 160, currentColor);
         }
         
-        if (GuiButton((Rectangle){10, 10, 80, 50}, "#197#")) layerMode = !layerMode;
-        if (layerMode){
-            const int spacing = 5;
-            const Vector2 boxSize = (Vector2){100, 30};
-            for (size_t i = 0; i < layers.size; ++i){
-                int boxYPos = 70+(spacing*i)+(boxSize.y*i);
-                DrawRectangle(10, boxYPos, 100, boxSize.y, (i == curLayerID) ? LIGHTGRAY : GRAY);
-                DrawText(TextFormat("LAYER: %zd", i), 15, boxYPos+2, 5, BLACK);
+        if (GuiButton((Rectangle){10, 10, 80, 50}, "#197#")){
+            Layer newLayer;
+            layer_create(&newLayer, inputRows, inputCols, TILESIZE);
+            elist_add(&layers, &newLayer);
+            
+            curLayerID++;
+            curLayer = (Layer*)elist_get(&layers, curLayerID);
+        }
+
+        const int spacing = 5;
+        const Vector2 boxSize = (Vector2){80, 30};
+        for (size_t i = 0; i < layers.size; ++i){
+            int boxYPos = 70+(spacing*i)+(boxSize.y*i);
+            Rectangle box = {10, boxYPos, 100, boxSize.y};
+            DrawRectangleRec(box, (i == curLayerID) ? LIGHTGRAY : GRAY);
+            DrawText(TextFormat("LAYER: %zd", i), 15, boxYPos+2, 5, BLACK);
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, box)){
+                curLayerID = i;
+                curLayer = (Layer*)elist_get(&layers, curLayerID);
+            }
+            if (GuiButton((Rectangle){box.x+box.width, box.y, 20, box.height/2}, "#121#")){
+                if (i-1 >= 0){
+                    Layer current = *(Layer*)elist_get(&layers, i);
+                    Layer * new = (Layer*)elist_get(&layers, i-1);
+                    
+                    elist_replace(&layers, new, i);
+                    elist_replace(&layers, &current, i-1);
+                }
+            }
+            if (GuiButton((Rectangle){box.x+box.width, box.y+(box.height/2), 20, box.height/2}, "#120#")){
+                if (i+1 < layers.size){
+                    Layer current = *(Layer*)elist_get(&layers, i);
+                    Layer * new = (Layer*)elist_get(&layers, i+1);
+                    
+                    elist_replace(&layers, new, i);
+                    elist_replace(&layers, &current, i+1);
+                }
             }
         }
         
